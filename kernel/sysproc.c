@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -94,4 +95,37 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_trace(void)
+{
+  int n;
+  if(argint(0,&n)<0)
+    return -1;
+  myproc()->tracemask = n;
+  return 0;
+}
+
+uint64
+sys_sysinfo(void)
+{
+  struct sysinfo info_tmp;
+  
+  //准备存数据
+  //存进程的统计数据
+  info_tmp.nproc=collect_process_unused();
+  //存内存数据
+  info_tmp.freemem=free_mem_count();
+
+  uint64 user_info_ptr; // user pointer to struct sysinfo
+
+  if(argaddr(0, &user_info_ptr) < 0)//先取得用户传过来的指针
+    return -1;
+  
+  //得到的结果写回
+  struct proc *p = myproc();
+  if(copyout(p->pagetable, user_info_ptr, (char *)&info_tmp, sizeof(info_tmp)) < 0)
+    return -1;
+  return 0;
 }
