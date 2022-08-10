@@ -432,3 +432,33 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+void 
+vmprint(pagetable_t pagetable, uint64 depth)
+{
+  if(depth > 2)
+    return;
+  if(depth == 0){
+    printf("page table %p\n", pagetable);
+  }
+  char *prefix;
+  if(depth == 0){
+    prefix = "..";
+  }
+  else if(depth == 1){
+    prefix = ".. ..";
+  }
+  else if(depth == 2){
+    prefix = ".. .. ..";
+  }
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    //如果是一个有效的PTE
+    if(pte & PTE_V){
+      // this PTE points to a lower-level page table.（获取物理地址）
+      uint64 child = PTE2PA(pte);
+      printf("%s%d: pte %p pa %p\n", prefix, i, pte, child);
+      vmprint((pagetable_t)child, depth + 1);
+    }
+  } 
+}
