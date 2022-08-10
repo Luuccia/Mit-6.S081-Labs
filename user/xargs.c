@@ -89,5 +89,8 @@ main(int argc, char *argv[])
     {
         wait(0);
     }
+    for(int i=0;i<args_num;i++){
+        free(args[i]);
+    } //释放内存
     exit(0);
 }
