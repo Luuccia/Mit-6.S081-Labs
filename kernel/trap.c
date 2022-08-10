@@ -67,6 +67,20 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
+    if(which_dev == 2 && p->alarm_int > 0)
+    {
+      p->tick_passed+=1;
+      if(p->tick_passed == p->alarm_int)
+      {
+        if(p->flag == 0)
+        {
+          memmove(p->alarm_save, p->trapframe, PGSIZE);
+          p->trapframe->epc=p->handler;
+          p->flag=1;//只有sigreturn可以将它置为0
+        }
+        p->tick_passed=0;
+      }
+    }
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
@@ -77,8 +91,10 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2){
     yield();
+  }
+    
 
   usertrapret();
 }
