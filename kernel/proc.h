@@ -107,9 +107,9 @@ struct proc {
   char name[16];               // Process name (debugging)
   
   //alarm 新增字段
-  int alarm_int;               //tick时间间隔
-  uint64 handler;              //sigalarm()需要处理的handler
-  int tick_passed;             //上一次执行handler之后过去的时间
-  int flag;                    //是否正在调用handler
-  struct trapframe *alarm_save;//保存调用sigalarm之前的寄存器的原始数据
+  int alarm_interval;          // 报警间隔
+  void (*alarm_handler)();     // 报警处理函数
+  int ticks_count;             // 两次报警间的滴答计数
+  int is_alarming;                    // 是否正在执行告警处理函数
+  struct trapframe* alarm_trapframe;  // 告警陷阱帧
 };

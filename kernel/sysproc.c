@@ -100,24 +100,23 @@ sys_uptime(void)
 uint64
 sys_sigalarm(void)
 {
-  struct proc* p=myproc();
-  //获取参数
-  int ticks;
-  uint64 handler_ptr;
-  argint(0,&ticks);
-  argaddr(1,&handler_ptr);
-  //传入参数
-  p->alarm_int = ticks;
-  p->handler = handler_ptr;
-
+  struct proc *p = myproc();
+  int interval;
+  void(*fn)();
+  if(argint(0, &interval) < 0)
+    return -1;
+  if(argaddr(1, (uint64*)&fn) < 0)
+    return -1;
+  p->alarm_interval = interval;
+  p->alarm_handler = fn;
+  p->ticks_count = interval;
   return 0;
 }
 
 uint64
 sys_sigreturn(void)
 {
-  struct proc* p=myproc();
-  p->flag = 0;//记得p->flag重置为0
-  memmove(p->trapframe,p->alarm_save,PGSIZE);
+  memmove(myproc()->trapframe, myproc()->alarm_trapframe, sizeof(struct trapframe));
+  myproc()->is_alarming = 0;
   return 0;
 }

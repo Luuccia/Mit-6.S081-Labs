@@ -119,10 +119,10 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-  p->tick_passed = 0;
-  p->alarm_int = -1;
-  p->handler = 0;
-  p->flag = 0;
+  p->is_alarming = 0;
+  p->alarm_interval = 0;
+  p->alarm_handler = 0;
+  p->ticks_count = 0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -131,11 +131,11 @@ found:
     return 0;
   }
 
-  // Allocate a alarm_save page.
-  if((p->alarm_save = (struct trapframe *)kalloc()) == 0){
-    freeproc(p);
-    release(&p->lock);
-    return 0;
+  // 初始化告警字段
+  if((p->alarm_trapframe = (struct trapframe*)kalloc()) == 0) {
+      freeproc(p);
+      release(&p->lock);
+      return 0;
   }
 
   // An empty user page table.
@@ -164,9 +164,16 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
-  if(p->alarm_save)
-    kfree((void*)p->alarm_save);
-  p->alarm_save = 0;
+
+  // Alarm
+  if(p->alarm_trapframe)
+    kfree((void*)p->alarm_trapframe);
+  p->alarm_trapframe = 0;
+  p->is_alarming = 0;
+  p->alarm_interval = 0;
+  p->alarm_handler = 0;
+  p->ticks_count = 0;
+
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
   p->pagetable = 0;
