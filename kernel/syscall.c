@@ -169,7 +169,7 @@ syscall(void)
     p->trapframe->a0 = syscalls[num]();
     //trace将输出：进程ID，系统调用名，跟踪掩码
     int trace_mask = p->tracemask;
-    if((trace_mask >> num) & 1)
+    if((1 << num) & trace_mask)
       printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num - 1], p->trapframe->a0);
   }
   else {
